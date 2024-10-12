@@ -4,5 +4,6 @@ tasks:
   default:
     cmds:
     - gofmt -w .
-    - go test ./...
-    - docker rm -f $(docker ps -aq)
+    - golangci-lint run ./... --fix
+    - go test -race ./...
+    - docker rm -f $(docker ps -aq) || true
