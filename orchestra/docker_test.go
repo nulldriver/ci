@@ -4,21 +4,19 @@ import (
 	"context"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/jtarchie/ci/orchestra"
-	"github.com/stretchr/testify/assert"
+	. "github.com/onsi/gomega"
 )
 
 func TestDockerRun(t *testing.T) {
+	assert := NewGomegaWithT(t)
 	client, err := orchestra.NewDocker("test")
-	assert.NoError(t, err)
+	assert.Expect(err).NotTo(HaveOccurred())
 
 	id, err := uuid.NewV7()
-	assert.NoError(t, err)
-
-	stdout, stderr := &strings.Builder{}, &strings.Builder{}
+	assert.Expect(err).NotTo(HaveOccurred())
 
 	container, err := client.RunContainer(
 		context.Background(),
@@ -28,15 +26,45 @@ func TestDockerRun(t *testing.T) {
 			Command: []string{"echo", "hello"},
 		},
 	)
-	assert.NoError(t, err)
-	assert.Eventually(t, func() bool {
+	assert.Expect(err).NotTo(HaveOccurred())
+
+	assert.Eventually(func() bool {
 		status, err := container.Status(context.Background())
-		assert.NoError(t, err)
+		assert.Expect(err).NotTo(HaveOccurred())
 
 		return status.IsDone() && status.ExitCode() == 0
-	}, 5*time.Second, 100*time.Millisecond)
-	assert.Eventually(t, func() bool {
+	}).Should(BeTrue())
+
+	stdout, stderr := &strings.Builder{}, &strings.Builder{}
+	assert.Eventually(func() bool {
 		err := container.Logs(context.Background(), stdout, stderr)
-		return err == nil && strings.Contains(stdout.String(), "hello")
-	}, 5*time.Second, 100*time.Millisecond)
+		assert.Expect(err).NotTo(HaveOccurred())
+
+		return strings.Contains(stdout.String(), "hello")
+	}).Should(BeTrue())
+
+	// running a container should be deterministic and idempotent
+	container, err = client.RunContainer(
+		context.Background(),
+		orchestra.Task{
+			ID:      id.String(),
+			Image:   "alpine",
+			Command: []string{"echo", "hello"},
+		},
+	)
+	assert.Expect(err).NotTo(HaveOccurred())
+
+	assert.Eventually(func() bool {
+		status, err := container.Status(context.Background())
+		assert.Expect(err).NotTo(HaveOccurred())
+
+		return status.IsDone() && status.ExitCode() == 0
+	}).Should(BeTrue())
+
+	stdout, stderr = &strings.Builder{}, &strings.Builder{}
+	assert.Eventually(func() bool {
+		err := container.Logs(context.Background(), stdout, stderr)
+		assert.Expect(err).NotTo(HaveOccurred())
+		return strings.Contains(stdout.String(), "hello")
+	}).Should(BeTrue())
 }

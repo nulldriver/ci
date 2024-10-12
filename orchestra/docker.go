@@ -7,8 +7,10 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/client"
+	"github.com/docker/docker/errdefs"
 	"github.com/docker/docker/pkg/stdcopy"
 )
 
@@ -50,6 +52,8 @@ func (d *Docker) RunContainer(ctx context.Context, task Task) (*DockerContainer,
 		return nil, fmt.Errorf("failed to pull image: %w", err)
 	}
 
+	containerName := fmt.Sprintf("%s-%s", d.namespace, task.ID)
+
 	response, err := d.client.ContainerCreate(
 		ctx,
 		&container.Config{
@@ -57,9 +61,28 @@ func (d *Docker) RunContainer(ctx context.Context, task Task) (*DockerContainer,
 			Cmd:   task.Command,
 		},
 		nil, nil, nil,
-		fmt.Sprintf("%s-%s", d.namespace, task.ID),
+		containerName,
 	)
 	if err != nil {
+		if errdefs.IsConflict(err) {
+			filter := filters.NewArgs()
+			filter.Add("name", containerName)
+
+			containers, err := d.client.ContainerList(ctx, container.ListOptions{Filters: filter, All: true})
+			if err != nil {
+				return nil, fmt.Errorf("failed to list containers: %w", err)
+			}
+
+			if len(containers) == 0 {
+				return nil, fmt.Errorf("failed to find container by name %s", containerName)
+			}
+
+			return &DockerContainer{
+				id:     containers[0].ID,
+				client: d.client,
+				task:   task,
+			}, nil
+		}
 		return nil, fmt.Errorf("failed to create container: %w", err)
 	}
 
