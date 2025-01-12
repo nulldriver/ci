@@ -67,4 +67,7 @@ func TestDockerRun(t *testing.T) {
 		assert.Expect(err).NotTo(HaveOccurred())
 		return strings.Contains(stdout.String(), "hello")
 	}).Should(BeTrue())
+
+	err = container.Cleanup(context.Background())
+	assert.Expect(err).NotTo(HaveOccurred())
 }

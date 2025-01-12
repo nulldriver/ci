@@ -6,4 +6,3 @@ tasks:
     - gofmt -w .
     - golangci-lint run ./... --fix
     - go test -race ./...
-    - docker rm -f $(docker ps -aq) || true

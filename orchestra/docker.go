@@ -136,3 +136,16 @@ func (s *DockerContainerStatus) IsDone() bool {
 func (s *DockerContainerStatus) ExitCode() int {
 	return s.state.ExitCode
 }
+
+func (d *DockerContainer) Cleanup(ctx context.Context) error {
+	err := d.client.ContainerRemove(ctx, d.id, container.RemoveOptions{
+		Force:         true,
+		RemoveLinks:   false,
+		RemoveVolumes: false,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to remove container: %w", err)
+	}
+
+	return nil
+}
