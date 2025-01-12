@@ -1,13 +1,10 @@
 const pipeline = () => {
-  try {
-    run({
-      name: 'simple-task',
-      image: 'alpine',
-      command: ['echo', 'Hello, World!'],
-    })
-  } catch(error) {
-    console.log("Something unexpected occurred: ", error);
-  }
+  const result = run({
+    name: "simple-task",
+    image: "alpine",
+    command: ["echo", "Hello, World!"],
+  });
+  console.log(JSON.stringify(result, null, 2));
 };
 
 export { pipeline };
