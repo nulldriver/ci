@@ -41,7 +41,7 @@ func NewDocker(namespace string) (*Docker, error) {
 	}, nil
 }
 
-func (d *Docker) RunContainer(ctx context.Context, task Task) (*DockerContainer, error) {
+func (d *Docker) RunContainer(ctx context.Context, task Task) (Container, error) {
 	reader, err := d.client.ImagePull(ctx, task.Image, image.PullOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to initiate pull image: %w", err)
@@ -98,7 +98,7 @@ func (d *Docker) RunContainer(ctx context.Context, task Task) (*DockerContainer,
 	}, nil
 }
 
-func (d *DockerContainer) Status(ctx context.Context) (*DockerContainerStatus, error) {
+func (d *DockerContainer) Status(ctx context.Context) (ContainerStatus, error) {
 	// doc: https://docs.docker.com/reference/api/engine/version/v1.43/#tag/Container/operation/ContainerInspect
 	inspection, err := d.client.ContainerInspect(ctx, d.id)
 	if err != nil {
@@ -129,14 +129,6 @@ func (d *DockerContainer) Logs(ctx context.Context, stdout, stderr io.Writer) er
 	return nil
 }
 
-func (s *DockerContainerStatus) IsDone() bool {
-	return s.state.Status == "exited"
-}
-
-func (s *DockerContainerStatus) ExitCode() int {
-	return s.state.ExitCode
-}
-
 func (d *DockerContainer) Cleanup(ctx context.Context) error {
 	err := d.client.ContainerRemove(ctx, d.id, container.RemoveOptions{
 		Force:         true,
@@ -148,4 +140,12 @@ func (d *DockerContainer) Cleanup(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func (s *DockerContainerStatus) IsDone() bool {
+	return s.state.Status == "exited"
+}
+
+func (s *DockerContainerStatus) ExitCode() int {
+	return s.state.ExitCode
 }
