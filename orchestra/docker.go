@@ -29,7 +29,7 @@ type DockerContainerStatus struct {
 	state *types.ContainerState
 }
 
-func NewDocker(namespace string) (*Docker, error) {
+func NewDocker(namespace string) (Orchestrator, error) {
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
 		return nil, fmt.Errorf("failed to create docker client: %w", err)
@@ -148,4 +148,8 @@ func (s *DockerContainerStatus) IsDone() bool {
 
 func (s *DockerContainerStatus) ExitCode() int {
 	return s.state.ExitCode
+}
+
+func init() {
+	Add("docker", NewDocker)
 }

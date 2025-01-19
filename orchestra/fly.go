@@ -22,7 +22,7 @@ type Fly struct {
 
 var limiter = ratelimit.New(3)
 
-func NewFly(namespace string) (*Fly, error) {
+func NewFly(namespace string) (Orchestrator, error) {
 	accessToken, appName, err := getFlyDetails()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get fly details: %w", err)
@@ -233,4 +233,8 @@ func getFlyDetails() (string, string, error) {
 	}
 
 	return accessToken, appName, nil
+}
+
+func init() {
+	Add("fly", NewFly)
 }
