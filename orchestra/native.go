@@ -2,6 +2,7 @@ package orchestra
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -57,11 +58,22 @@ func (n *NativeContainer) Status(ctx context.Context) (ContainerStatus, error) {
 		return nil, fmt.Errorf("context cancelled could not get status")
 	case err := <-n.errChan:
 		if err != nil {
-			return nil, fmt.Errorf("failed to get status: %w", err)
+			var exitErr *exec.ExitError
+
+			if !errors.As(err, &exitErr) {
+				return nil, fmt.Errorf("failed to get status: %w", err)
+			}
 		}
+		defer func() { n.errChan <- err }()
+
 		return &NativeStatus{
 			exitCode: n.command.ProcessState.ExitCode(),
 			isDone:   n.command.ProcessState.Exited(),
+		}, nil
+	default:
+		return &NativeStatus{
+			exitCode: -1,
+			isDone:   false,
 		}, nil
 	}
 }
