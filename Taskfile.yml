@@ -6,4 +6,5 @@ tasks:
     - gofmt -w .
     - golangci-lint run ./... --fix
     - go test -race ./...
+    - go run main.go runtime examples/hello-world.js
   cleanup: fly machines ls -a $FLY_APP_NAME --json | jq .[].id -r | xargs -I {} fly machines destroy -f -a $FLY_APP_NAME {}
