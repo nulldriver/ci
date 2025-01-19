@@ -12,10 +12,10 @@ import (
 )
 
 func TestDrivers(t *testing.T) {
-	assert := NewGomegaWithT(t)
-
 	orchestra.Each(func(name string, init orchestra.InitFunc) {
 		t.Run(name, func(t *testing.T) {
+			assert := NewGomegaWithT(t)
+
 			client, err := init("test")
 			assert.Expect(err).NotTo(HaveOccurred())
 
