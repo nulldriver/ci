@@ -12,6 +12,8 @@ import (
 )
 
 func TestDrivers(t *testing.T) {
+	t.Parallel()
+
 	orchestra.Each(func(name string, init orchestra.InitFunc) {
 		t.Run(name, func(t *testing.T) {
 			assert := NewGomegaWithT(t)
