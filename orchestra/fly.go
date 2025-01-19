@@ -143,7 +143,6 @@ func (f *FlyContainer) Logs(ctx context.Context, stdout io.Writer, stderr io.Wri
 	}()
 
 	for entry := range out {
-		slog.Info("entry", "message", entry.Message)
 		_, _ = io.WriteString(stdout, entry.Message)
 	}
 
