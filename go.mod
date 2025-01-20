@@ -1,17 +1,17 @@
 module github.com/jtarchie/ci
 
-go 1.23.2
+go 1.23.4
 
 require (
 	github.com/alecthomas/kong v1.6.1
 	github.com/docker/docker v27.5.0+incompatible
-	github.com/dop251/goja v0.0.0-20241024094426-79f3a7efcdbd
+	github.com/dop251/goja v0.0.0-20250114131315-46d383d606d3
 	github.com/dop251/goja_nodejs v0.0.0-20240728170619-29b559befffc
 	github.com/evanw/esbuild v0.24.2
 	github.com/google/uuid v1.6.0
 	github.com/onsi/gomega v1.36.2
 	github.com/superfly/fly-go v0.1.37
-	github.com/superfly/flyctl v0.3.63
+	github.com/superfly/flyctl v0.3.64
 	go.uber.org/ratelimit v0.3.1
 )
 
@@ -113,6 +113,5 @@ require (
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	gotest.tools/v3 v3.5.1 // indirect
 	gvisor.dev/gvisor v0.0.0-20230927004350-cbd86285d259 // indirect
 )
