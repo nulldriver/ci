@@ -17,7 +17,8 @@ import (
 )
 
 type Runtime struct {
-	Pipeline *os.File `arg:"" help:"Path to pipeline javascript file"`
+	Pipeline     *os.File `arg:"" help:"Path to pipeline javascript file"`
+	Orchestrator string   `help:"orchestrator runtime to use" default:"native"`
 }
 
 type Result struct {
@@ -39,7 +40,12 @@ func (c *Runtime) Run() error {
 		return fmt.Errorf("failed to read pipeline file: %w", err)
 	}
 
-	client, err := orchestra.NewDocker("ci")
+	orchestrator, found := orchestra.Get(c.Orchestrator)
+	if !found {
+		return fmt.Errorf("could not get orchestrator: %s", c.Orchestrator)
+	}
+
+	client, err := orchestrator("ci")
 	if err != nil {
 		return fmt.Errorf("could not create docker client: %w", err)
 	}
@@ -60,9 +66,9 @@ func (c *Runtime) Run() error {
 			}
 		}
 
-		logger := slog.With("id", id)
+		logger := slog.With("id", id, "orchestrator", c.Orchestrator)
 
-		logger.Info("container.run", "input", input,)
+		logger.Info("container.run", "input", input)
 
 		container, err := client.RunContainer(
 			context.Background(),
@@ -83,7 +89,7 @@ func (c *Runtime) Run() error {
 
 		for {
 			var err error
-			
+
 			status, err = container.Status(context.Background())
 			if err != nil {
 				return &Result{
@@ -120,7 +126,7 @@ func (c *Runtime) Run() error {
 		return &Result{
 			Stdout: stdout.String(),
 			Stderr: stderr.String(),
-			Code:  status.ExitCode(),
+			Code:   status.ExitCode(),
 		}
 	}
 
