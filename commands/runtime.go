@@ -60,7 +60,9 @@ func (c *Runtime) Run() error {
 			}
 		}
 
-		slog.Info("conntainer.run", slog.Any("input", input))
+		logger := slog.With("id", id)
+
+		logger.Info("container.run", "input", input,)
 
 		container, err := client.RunContainer(
 			context.Background(),
@@ -77,8 +79,12 @@ func (c *Runtime) Run() error {
 			}
 		}
 
+		var status orchestra.ContainerStatus
+
 		for {
-			status, err := container.Status(context.Background())
+			var err error
+			
+			status, err = container.Status(context.Background())
 			if err != nil {
 				return &Result{
 					Code:  1,
@@ -91,11 +97,22 @@ func (c *Runtime) Run() error {
 			}
 		}
 
+		logger.Info("container.status", "exitCode", status.ExitCode())
+
+		defer func() {
+			err := container.Cleanup(context.Background())
+			if err != nil {
+				slog.Error("container.cleanup", "err", err)
+			}
+		}()
+
 		stdout, stderr := &strings.Builder{}, &strings.Builder{}
 		err = container.Logs(context.Background(), stdout, stderr)
 		if err != nil {
+			logger.Error("container.logs", "err", err)
+
 			return &Result{
-				Code:  1,
+				Code:  status.ExitCode(),
 				Error: fmt.Sprintf("could not get container logs: %s", err),
 			}
 		}
@@ -103,7 +120,7 @@ func (c *Runtime) Run() error {
 		return &Result{
 			Stdout: stdout.String(),
 			Stderr: stderr.String(),
-			Code:   0,
+			Code:  status.ExitCode(),
 		}
 	}
 
